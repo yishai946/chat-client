@@ -1,75 +1,39 @@
-import { Button, Input } from "@rneui/themed";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Button, Input, Avatar } from "@rneui/themed";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import TextAvatar from "react-native-text-avatar";
-import { useAppContext } from "../AppContext";
-import { auth, db } from "../utils/firebaseConfig";
-import { setDoc, doc } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-function colorHash(inputString) {
-  var sum = 0;
-
-  for (var i in inputString) {
-    sum += inputString.charCodeAt(i);
-  }
-
-  r = ~~(
-    ("0." +
-      Math.sin(sum + 1)
-        .toString()
-        .substr(6)) *
-    256
-  );
-  g = ~~(
-    ("0." +
-      Math.sin(sum + 2)
-        .toString()
-        .substr(6)) *
-    256
-  );
-  b = ~~(
-    ("0." +
-      Math.sin(sum + 3)
-        .toString()
-        .substr(6)) *
-    256
-  );
-
-  var rgb = "rgb(" + r + ", " + g + ", " + b + ")";
-
-  var hex = "#";
-
-  hex += ("00" + r.toString(16)).substr(-2, 2).toUpperCase();
-  hex += ("00" + g.toString(18)).substr(-2, 2).toUpperCase();
-  hex += ("00" + b.toString(20)).substr(-2, 2).toUpperCase();
-
-  return {
-    r: r,
-    g: g,
-    b: b,
-    rgb: rgb,
-    hex: hex,
-  };
-}
+import { auth } from "../utils/firebaseConfig";
+import * as ImagePicker from "expo-image-picker";
 
 const Signup = ({ navigation }) => {
-  const [color, setColor] = useState("#000000");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [image, setImage] = useState(
+    "https://i.pinimg.com/736x/5e/39/6b/5e396bb1b17681759922dd10f8a9d702.jpg"
+  );
 
   // signup event handler
   const handleSignup = async () => {
     try {
+      if (
+        image ==
+          "https://i.pinimg.com/736x/5e/39/6b/5e396bb1b17681759922dd10f8a9d702.jpg" ||
+        !username ||
+        !email ||
+        !password
+      ) {
+        alert("Please select an image and fill all fields");
+        return;
+      }
       // store user in async storage
       AsyncStorage.setItem("username", username);
       AsyncStorage.setItem("email", email);
+      AsyncStorage.setItem("image", image);
 
       // create user in auth
       await createUserWithEmailAndPassword(auth, email, password);
-
     } catch (error) {
       console.log(error);
     }
@@ -82,26 +46,40 @@ const Signup = ({ navigation }) => {
     }
   };
 
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <TextAvatar
-        backgroundColor={color}
-        textColor={"white"}
-        size={60}
-        type={"circle"}
-      >
-        {username}
-      </TextAvatar>
+      <TouchableOpacity onPress={pickImage}>
+        <Avatar
+          size={60}
+          rounded
+          source={{
+            uri: image,
+          }}
+        />
+      </TouchableOpacity>
       <View style={{ width: "70%" }}>
         <Input
           inputStyle={{ padding: 10 }}
           placeholder="Username"
           value={username}
           onKeyPress={handleKeyPress}
-          onChangeText={(text) => {
-            setUsername(text);
-            setColor(colorHash(text).hex);
-          }}
+          onChangeText={(text) => setUsername(text)}
         />
         <Input
           inputStyle={{ padding: 10 }}
