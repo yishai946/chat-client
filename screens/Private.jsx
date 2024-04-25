@@ -4,14 +4,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { FontAwesome } from "@expo/vector-icons";
 import MyMessage from "../components/MyMessage";
 import OtherMessage from "../components/OtherMessage";
-import ConnectionMessage from "../components/ConnectionMessage";
 import { useAppContext } from "../AppContext";
 
-const Home = () => {
-  const { messagesList, send, user } = useAppContext();
+const Private = ({ route }) => {
+  const { user2 } = route.params;
+  const { chats, sendPrivate, user } = useAppContext();
   const [message, setMessage] = useState("");
   const input = useRef();
   const scrollViewRef = useRef();
+  const messagesList = chats.find(
+    (c) =>
+      (c.person1.id === user.id && c.person2.id === user2.id) ||
+      (c.person1.id === user2.id && c.person2.id === user.id)
+  )?.messages;
 
   useEffect(() => {
     // When messages change, scroll to the bottom
@@ -21,7 +26,7 @@ const Home = () => {
   // when pressing enter send the text
   const handleKeyPress = ({ nativeEvent }) => {
     if (nativeEvent.key === "Enter") {
-      send(message);
+      sendPrivate(message, user2.id);
       setMessage("");
       input.focus();
     }
@@ -40,9 +45,7 @@ const Home = () => {
       >
         {messagesList &&
           messagesList.map((message, index) =>
-            message.type === "user" ? (
-              <ConnectionMessage message={message} key={index} />
-            ) : message.user.id === user.id ? (
+             message.user.id === user.id ? (
               <MyMessage key={index} message={message} />
             ) : (
               <OtherMessage key={index} message={message} />
@@ -62,7 +65,7 @@ const Home = () => {
           <Button
             buttonStyle={{ backgroundColor: "#ffffff" }}
             onPress={() => {
-              send(message);
+              sendPrivate(message, user2.id);
               setMessage("");
             }}
           >
@@ -73,6 +76,8 @@ const Home = () => {
     </>
   );
 };
+
+export default Private;
 
 const styles = StyleSheet.create({
   container: {
@@ -90,5 +95,3 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
 });
-
-export default Home;

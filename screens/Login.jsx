@@ -1,83 +1,76 @@
-import { StyleSheet, Text, View } from "react-native";
-import React, { useState } from "react";
-import TextAvatar from "react-native-text-avatar";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from "react-native";
+import React, {useState} from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../utils/firebaseConfig";
 import { Button, Input } from "@rneui/themed";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-function colorHash(inputString) {
-  var sum = 0;
+const Login = ({ navigation }) => {
+  const [email, setEmail] = useState("");
 
-  for (var i in inputString) {
-    sum += inputString.charCodeAt(i);
-  }
+  const [password, setPassword] = useState("");
 
-  r = ~~(
-    ("0." +
-      Math.sin(sum + 1)
-        .toString()
-        .substr(6)) *
-    256
-  );
-  g = ~~(
-    ("0." +
-      Math.sin(sum + 2)
-        .toString()
-        .substr(6)) *
-    256
-  );
-  b = ~~(
-    ("0." +
-      Math.sin(sum + 3)
-        .toString()
-        .substr(6)) *
-    256
-  );
+  const handleLogin = async () => {
+    try {
+      AsyncStorage.setItem("email", email);
 
-  var rgb = "rgb(" + r + ", " + g + ", " + b + ")";
-
-  var hex = "#";
-
-  hex += ("00" + r.toString(16)).substr(-2, 2).toUpperCase();
-  hex += ("00" + g.toString(18)).substr(-2, 2).toUpperCase();
-  hex += ("00" + b.toString(20)).substr(-2, 2).toUpperCase();
-
-  return {
-    r: r,
-    g: g,
-    b: b,
-    rgb: rgb,
-    hex: hex,
-  };
-}
-
-const Login = ({navigation}) => {
-  const [color, setColor] = React.useState("#000000");
-  const [username, setUsername] = React.useState("");
-
-  const handleLogin = () => {
-    navigation.navigate("Home", { username, color });
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      if (error.code === "auth/invalid-email") {
+        if (Platform.OS === "web") {
+          alert("Invalid Email", "Please enter a valid email address");
+        } else {
+          Alert.alert("Invalid Email, Please enter a valid email address");
+        }
+      }
+      if (error.code === "auth/invalid-credential") {
+        if (Platform.OS === "web") {
+          alert("Invalid Credential, password or email are incorrect");
+        } else {
+          Alert.alert("Invalid Credential", "Please enter a valid password");
+        }
+      }
+    }
   };
 
+  // enter event handler
+  const handleKeyPress = ({ nativeEvent }) => {
+    if (nativeEvent.key === "Enter") {
+      handleLogin();
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <TextAvatar
-        backgroundColor={color}
-        textColor={"white"}
-        size={60}
-        type={"circle"}
-      >
-        {username}
-      </TextAvatar>
       <View style={{ width: "70%" }}>
         <Input
-          value={username}
-          onChangeText={(text) => {
-            setUsername(text);
-            setColor(colorHash(text).hex);
-          }}
+          inputStyle={{ padding: 10 }}
+          placeholder="Email"
+          value={email}
+          onKeyPress={handleKeyPress}
+          onChangeText={(text) => setEmail(text)}
+        />
+        <Input
+          inputStyle={{ padding: 10 }}
+          placeholder="Password"
+          secureTextEntry={true}
+          value={password}
+          onKeyPress={handleKeyPress}
+          onChangeText={(text) => setPassword(text)}
         />
       </View>
       <Button onPress={handleLogin}>Login</Button>
+      <Text>Don't have an account?</Text>
+      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+        <Text style={{ color: "royalblue" }}>Signup</Text>
+      </TouchableOpacity>
     </View>
   );
 };

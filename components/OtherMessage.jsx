@@ -52,17 +52,17 @@ const OtherMessage = ({ message }) => {
   return (
     <View style={styles.container}>
       <View style={styles.message}>
-        <Text style={styles.name}>{message.username}</Text>
+        <Text style={styles.name}>{message.user.username}</Text>
         <Text style={styles.text}>{message.message}</Text>
         <Text style={styles.subText}>{message.time}</Text>
       </View>
       <TextAvatar
-        backgroundColor={colorHash(message.username).hex}
+        backgroundColor={colorHash(message.user.username).hex}
         textColor={"white"}
         size={40}
         type={"circle"}
       >
-        {message.username}
+        {message.user.username}
       </TextAvatar>
     </View>
   );
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     width: "100%",
     display: "flex",
     flexDirection: "row",
-    justifyContent: "right",
+    justifyContent: "flex-end",
     marginTop: 10,
     gap: 10,
   },
